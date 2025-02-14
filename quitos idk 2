@@ -1,0 +1,117 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "ProjectQuitos"
+screenGui.Parent = playerGui
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 500, 0, 300)
+frame.Position = UDim2.new(0.5, -250, 0.5, -150)
+frame.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+frame.Parent = screenGui
+
+local corner = Instance.new("UICorner")
+corner.CornerRadius = UDim.new(0, 15)
+corner.Parent = frame
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, 0, 0, 40)
+titleLabel.Position = UDim2.new(0, 0, 0, 0)
+titleLabel.Text = "Project Quitos"
+titleLabel.TextSize = 24
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+titleLabel.Parent = frame
+
+local commandBox = Instance.new("TextBox")
+commandBox.Size = UDim2.new(1, -20, 0, 40)
+commandBox.Position = UDim2.new(0, 10, 0, 50)
+commandBox.ClearTextOnFocus = true
+commandBox.PlaceholderText = "Type command here (e.g., print('Hello World'))"
+commandBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+commandBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+commandBox.TextSize = 18
+commandBox.Parent = frame
+
+local executeButton = Instance.new("TextButton")
+executeButton.Size = UDim2.new(0, 200, 0, 50)
+executeButton.Position = UDim2.new(0.5, -100, 0, 100)
+executeButton.Text = "Execute"
+executeButton.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+executeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+executeButton.TextSize = 20
+executeButton.Parent = frame
+
+local clearButton = Instance.new("TextButton")
+clearButton.Size = UDim2.new(0, 200, 0, 50)
+clearButton.Position = UDim2.new(0.5, -100, 0, 160)
+clearButton.Text = "Clear"
+clearButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+clearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+clearButton.TextSize = 20
+clearButton.Parent = frame
+
+local dragging = false
+local dragInput, dragStart, startPos
+
+local function updateDrag(input)
+    local delta = input.Position - dragStart
+    frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+
+local function beginDrag(input)
+    dragging = true
+    dragStart = input.Position
+    startPos = frame.Position
+end
+
+frame.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            beginDrag(input)
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end
+end)
+
+frame.InputChanged:Connect(function(input)
+    if dragging then
+        if input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateDrag(input)
+        elseif input.UserInputType == Enum.UserInputType.Touch then
+            updateDrag(input)
+        end
+    end
+end)
+
+executeButton.MouseButton1Click:Connect(function()
+    local inputText = commandBox.Text
+    if inputText and inputText ~= "" then
+        print("Command entered: " .. inputText)
+
+        local success, result = pcall(function()
+            local func = loadstring(inputText)
+            if func then
+                func()
+            end
+        end)
+
+        if success then
+            print("Command executed successfully.")
+        else
+            print("Error executing command: " .. result)
+        end
+    else
+        print("Please enter a valid command.")
+    end
+end)
+
+clearButton.MouseButton1Click:Connect(function()
+    commandBox.Text = ""
+end)
